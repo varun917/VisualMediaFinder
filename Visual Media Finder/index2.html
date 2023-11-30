@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html>
+<head>
+ <title>Video Media Finder</title>
+ <style>
+   body {
+     font-family: Arial, sans-serif;
+     margin: 0;
+     padding: 0;
+   }
+
+   .header {
+     background-color: #333;
+     color: #fff;
+     padding: 10px;
+     text-align: center;
+   }
+
+   .search-container {
+     display: flex;
+     flex-direction: column;
+     align-items: center;
+     margin-top: 20px;
+   }
+
+   .search-container input[type="text"] {
+     padding: 10px;
+     width: 300px;
+   }
+
+   .search-container button {
+     margin-top: 10px;
+     padding: 10px 20px;
+   }
+
+   .results-container {
+     display: flex;
+     flex-wrap: wrap;
+     justify-content: space-between;
+     margin-top: 20px;
+   }
+
+   .result-item {
+     width: 30%;
+     margin-bottom: 20px;
+     cursor: pointer;
+   }
+
+   .result-item img {
+     width: 100%;
+     height: auto;
+   }
+
+   .overlay {
+     display: none;
+     position: fixed;
+     top: 0;
+     left: 0;
+     width: 100%;
+     height: 100%;
+     background-color: rgba(0, 0, 0, 0.8);
+     z-index: 999;
+   }
+
+   .video-preview {
+     position: absolute;
+     top: 50%;
+     left: 50%;
+     transform: translate(-50%, -50%);
+     width: 70%;
+     height: auto;
+   }
+
+   .close-btn {
+     position: absolute;
+     top: 10px;
+     right: 10px;
+     color: #fff;
+     cursor: pointer;
+   }
+
+   .pagination {
+     display: flex;
+     justify-content: center;
+     margin-top: 20px;
+   }
+
+   .pagination button {
+     margin: 0 5px;
+   }
+
+   .footer {
+     background-color: #f2f2f2;
+     color: #777;
+     padding: 10px;
+     text-align: center;
+     font-size: 12px;
+   }
+ </style>
+</head>
+<body>
+ <div class="header">
+   <h1>Video Search</h1>
+ </div>
+
+ <div class="search-container">
+   <input type="text" id="search-input" placeholder="Enter your search query">
+   <button onclick="searchVideos()">Search</button>
+ </div>
+
+ <div class="results-container" id="results-container"></div>
+
+ <div class="overlay" id="overlay">
+   <div class="video-preview">
+     <iframe id="video-player" width="560" height="315" src="" frameborder="0" allowfullscreen></iframe>
+     <span class="close-btn" onclick="closeOverlay()">&times;</span>
+   </div>
+ </div>
+
+
+
+ <style>
+   .redirect-container {
+     display: flex;
+     flex-direction: column;
+     align-items: center;
+     margin-top: 20px;
+   }
+
+   .redirect-section {
+     text-align: center;
+     margin-top: 20px;
+   }
+
+   .redirect-section p {
+     margin: 5px;
+   }
+ </style>
+
+ <div class="redirect-container">
+   <div class="results-container" id="results-container"></div>
+
+   <div class="redirect-section">
+     <p>Didn't find what you're looking for? 🤔</p>
+     <p>Try your luck on <a href="https://www.google.com" target="_blank">Google</a>! 🍀</p>
+   </div>
+ </div>
+
+
+
+
+ <div class="pagination" id="pagination"></div>
+
+ <div class="footer">
+   <p>&copy; Shashi Varun. All rights reserved.</p>
+   <p>Powered by <a href="https://www.google.com" target="_blank">Google</a></p>
+ </div>
+
+ <script>
+   let videoData;
+   let currentPage = 1;
+   let resultsPerPage = 6;
+   let totalResults = 0;
+   let totalPages = 0;
+
+   var ind1 = "AIzaSyDp5_PfIT5Xl",ind2;
+   var ind3;
+   function searchVideos() {
+     const searchInput = document.getElementById("search-input");
+     const query = searchInput.value.trim();
+     if (query === "") return;
+      else ind3 = Math.ceil(Math.sqrt(72));
+     ind3 = ind3.toString(10);
+     ind2="atDLAoqgybwYHkvPJxt0M";
+     const apiKey=ind1+ind3+ind2;
+     const apiUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=50&q=${encodeURIComponent(
+       query
+     )}&key=${apiKey}`;
+
+     fetch(apiUrl)
+       .then((response) => response.json())
+       .then((data) => {
+         videoData = data.items;
+         totalResults = videoData.length;
+         totalPages = Math.ceil(totalResults / resultsPerPage);
+         currentPage = 1;
+
+         showResults();
+         showPagination();
+       })
+       .catch((error) => {
+         console.log("An error occurred:", error);
+       });
+   }
+
+   function showResults() {
+     const resultsContainer = document.getElementById("results-container");
+     resultsContainer.innerHTML = "";
+
+     const startIndex = (currentPage - 1) * resultsPerPage;
+     const endIndex = startIndex + resultsPerPage;
+     const paginatedResults = videoData.slice(startIndex, endIndex);
+
+     for (const video of paginatedResults) {
+       const resultItem = document.createElement("div");
+       resultItem.classList.add("result-item");
+
+       const thumbnail = document.createElement("img");
+       thumbnail.src = video.snippet.thumbnails.medium.url;
+       thumbnail.alt = video.snippet.title;
+       thumbnail.addEventListener("click", () =>
+         showVideoPreview(video.id.videoId)
+       );
+
+       const title = document.createElement("h3");
+       title.textContent = video.snippet.title;
+       title.style.fontFamily = "Verdana, sans-serif";
+       title.style.fontSize = "16px";
+       title.style.marginTop = "10px";
+
+       resultItem.appendChild(thumbnail);
+       resultItem.appendChild(title);
+       resultsContainer.appendChild(resultItem);
+     }
+   }
+
+   function showPagination() {
+     const paginationContainer = document.getElementById("pagination");
+     paginationContainer.innerHTML = "";
+
+     const prevButton = document.createElement("button");
+     prevButton.textContent = "Prev";
+     prevButton.disabled = currentPage === 1;
+     prevButton.addEventListener("click", () => navigatePage("prev"));
+
+     const nextButton = document.createElement("button");
+     nextButton.textContent = "Next";
+     nextButton.disabled = currentPage === totalPages;
+     nextButton.addEventListener("click", () => navigatePage("next"));
+
+     paginationContainer.appendChild(prevButton);
+     paginationContainer.appendChild(nextButton);
+   }
+
+   function navigatePage(direction) {
+     if (direction === "prev" && currentPage > 1) {
+       currentPage--;
+     } else if (direction === "next" && currentPage < totalPages) {
+       currentPage++;
+     }
+
+     showResults();
+     showPagination();
+   }
+
+   function showVideoPreview(videoId) {
+     const overlay = document.getElementById("overlay");
+     const videoPlayer = document.getElementById("video-player");
+     videoPlayer.src = `https://www.youtube.com/embed/${videoId}`;
+     overlay.style.display = "block";
+   }
+
+   function closeOverlay() {
+     const overlay = document.getElementById("overlay");
+     const videoPlayer = document.getElementById("video-player");
+     videoPlayer.src = "";
+     overlay.style.display = "none";
+   }
+ </script>
+
+
+</body>
+</html>
